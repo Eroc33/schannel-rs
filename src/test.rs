@@ -656,16 +656,37 @@ fn split_cert_key() {
 
 #[test]
 fn test_alpn() {
+	let cert = match localhost_cert() {
+        Some(cert) => cert,
+        None => return,
+    };
+
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap();
+    let t = thread::spawn(move || {
+        let stream = TcpStream::connect(&addr).unwrap();
+        let creds = SchannelCred::builder()
+                                 .acquire(Direction::Outbound).unwrap();
+        let mut stream = tls_stream::Builder::new()
+            .domain("localhost")
+			.request_application_protocols(vec![b"h2".to_vec()])
+            .connect(creds, stream)
+            .unwrap();
+        assert_eq!(stream.get_negotiated_application_protocol().expect("localhost unreachable"),Some(b"h2".to_vec()));
+		
+        stream.shutdown().unwrap();
+    });
+
+    let stream = listener.accept().unwrap().0;
     let creds = SchannelCred::builder()
-        .enabled_protocols(&[Protocol::Tls12])
-        .acquire(Direction::Outbound)
-        .unwrap();
-    let stream = TcpStream::connect("google.com:443").unwrap();
+                        .cert(cert)
+                        .acquire(Direction::Inbound)
+                        .unwrap();
     let mut stream = tls_stream::Builder::new()
-        .domain("google.com")
-        .request_application_protocols(vec![b"h2".to_vec()])
-        .connect(creds, stream)
+		.request_application_protocols(vec![b"h2".to_vec()])
+        .accept(creds, stream)
         .unwrap();
-    assert_eq!(stream.get_negotiated_application_protocol().expect("google.com unreachable"),Some(b"h2".to_vec()));
-    //TODO: close the connection nicely
+    assert_eq!(stream.get_negotiated_application_protocol().expect("localhost unreachable"),Some(b"h2".to_vec()));
+
+    t.join().unwrap();
 }
