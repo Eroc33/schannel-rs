@@ -669,11 +669,11 @@ fn test_loopback_alpn() {
                                  .acquire(Direction::Outbound).unwrap();
         let mut stream = tls_stream::Builder::new()
             .domain("localhost")
-			.request_application_protocols(vec![b"h2".to_vec(),b"guard".to_vec()])
+			.request_application_protocols(vec![b"h2".to_vec(),b"http/1.0".to_vec()])
             .connect(creds, stream)
             .unwrap();
         assert_eq!(stream.get_negotiated_application_protocol().expect("localhost unreachable"),Some(b"h2".to_vec()));
-        
+
 		
         stream.shutdown().unwrap();
     });
@@ -684,7 +684,7 @@ fn test_loopback_alpn() {
                         .acquire(Direction::Inbound)
                         .unwrap();
     let mut stream = tls_stream::Builder::new()
-		.request_application_protocols(vec![b"h2".to_vec()])
+		.request_application_protocols(vec![b"h2".to_vec(),b"guard".to_vec()])
         .accept(creds, stream)
         .unwrap();
     assert_eq!(stream.get_negotiated_application_protocol().expect("localhost unreachable"),Some(b"h2".to_vec()));
@@ -733,7 +733,7 @@ fn test_external_alpn() {
 	let creds = SchannelCred::builder().acquire(Direction::Outbound).unwrap();
     let stream = TcpStream::connect("google.com:443").unwrap();
     let mut stream = tls_stream::Builder::new()
-		.request_application_protocols(vec![b"h2".to_vec()])
+		.request_application_protocols(vec![b"h2".to_vec(),b"guard".to_vec()])
         .domain("google.com")
         .connect(creds, stream)
         .unwrap();
