@@ -669,7 +669,7 @@ fn test_loopback_alpn() {
                                  .acquire(Direction::Outbound).unwrap();
         let mut stream = tls_stream::Builder::new()
             .domain("localhost")
-			.request_application_protocols(vec![b"h2".to_vec()])
+			.request_application_protocols(vec![b"h2".to_vec(),b"guard".to_vec()])
             .connect(creds, stream)
             .unwrap();
         assert_eq!(stream.get_negotiated_application_protocol().expect("localhost unreachable"),Some(b"h2".to_vec()));
@@ -719,7 +719,7 @@ fn test_loopback_alpn_mismatch() {
                         .acquire(Direction::Inbound)
                         .unwrap();
     let mut stream = tls_stream::Builder::new()
-		.request_application_protocols(vec![b"h2".to_vec()])
+		.request_application_protocols(vec![b"h2".to_vec(),b"guard".to_vec()])
         .accept(creds, stream)
         .unwrap();
     assert_eq!(stream.get_negotiated_application_protocol().expect("localhost unreachable"),None);
