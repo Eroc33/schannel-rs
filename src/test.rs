@@ -673,6 +673,7 @@ fn test_loopback_alpn() {
             .connect(creds, stream)
             .unwrap();
         assert_eq!(stream.get_negotiated_application_protocol().expect("localhost unreachable"),Some(b"h2".to_vec()));
+        
 		
         stream.shutdown().unwrap();
     });
